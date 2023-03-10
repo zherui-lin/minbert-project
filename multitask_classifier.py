@@ -115,7 +115,7 @@ class MultitaskBERT(nn.Module):
         # embeddings = self.para_interm_linear(embeddings)
         embeddings = self.para_dropout(embeddings)
         # embeddings = F.relu(embeddings)  # activated layer
-        embeddings = self.para_out_linear(embeddings)
+        # embeddings = self.para_out_linear(embeddings)
         embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
         probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
@@ -137,7 +137,7 @@ class MultitaskBERT(nn.Module):
         # embeddings = self.sts_interm_linear(embeddings)
         embeddings = self.sts_dropout(embeddings)
         # embeddings = F.relu(embeddings)  # add nonlinear layer
-        embeddings = self.sts_out_linear(embeddings)
+        # embeddings = self.sts_out_linear(embeddings)
         embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
         scores =  logits * 2.5 + 2.5 # normalize to (1, 0) and scale to (0, 5)
@@ -366,9 +366,9 @@ def get_args():
     # use seperate batch sizes for different tasks since training sets have variant size
     # ideal batch sizes to make similar batch nums for 3 tasks should be 4 : 64 : 3
     # larger batch sizes are better but limited by GPU memory capability
-    # current default sizes can fit in 26G GPU
+    # current default sizes can fit in 24G GPU
     parser.add_argument("--sst_batch_size", help='fit with para batch size', type=int, default=3)  # Jerry edited
-    parser.add_argument("--para_batch_size", help='48 can fit in 26G GPU', type=int, default=48)  # Jerry edited
+    parser.add_argument("--para_batch_size", help='48 can fit in 24G GPU', type=int, default=48)  # Jerry edited
     parser.add_argument("--sts_batch_size", help='fit with para batch size', type=int, default=2)  # Jerry edited
     parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
     parser.add_argument("--lr", type=float, help="learning rate, default lr for 'pretrain': 1e-3, 'finetune': 1e-5",
