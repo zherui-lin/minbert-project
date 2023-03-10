@@ -92,9 +92,9 @@ class MultitaskBERT(nn.Module):
         # raise NotImplementedError
 
         embeddings = self.forward(input_ids, attention_mask)
-        embeddings = self.sst_interm_linear(embeddings)
+        # embeddings = self.sst_interm_linear(embeddings)
         embeddings = self.sst_dropout(embeddings)
-        embeddings = F.relu(embeddings) # activated layer
+        # embeddings = F.relu(embeddings) # activated layer
         logits = self.sst_out_linear(embeddings) # unnormalized
         probs = F.softmax(logits, dim=-1)  # normalized prob distribution
         return probs
@@ -112,9 +112,9 @@ class MultitaskBERT(nn.Module):
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
         embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
-        embeddings = self.para_interm_linear(embeddings)
+        # embeddings = self.para_interm_linear(embeddings)
         embeddings = self.para_dropout(embeddings)
-        embeddings = F.relu(embeddings)  # activated layer
+        # embeddings = F.relu(embeddings)  # activated layer
         embeddings = self.para_out_linear(embeddings)
         embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
@@ -134,9 +134,9 @@ class MultitaskBERT(nn.Module):
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
         embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
-        embeddings = self.sts_interm_linear(embeddings)
+        # embeddings = self.sts_interm_linear(embeddings)
         embeddings = self.sts_dropout(embeddings)
-        embeddings = F.relu(embeddings)  # add nonlinear layer
+        # embeddings = F.relu(embeddings)  # add nonlinear layer
         embeddings = self.sts_out_linear(embeddings)
         embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
