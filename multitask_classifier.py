@@ -68,7 +68,7 @@ class MultitaskBERT(nn.Module):
         self.para_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
         self.sts_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
 
-        self.para_classifier = nn.Linear(config.hidden_size * 3, 2)  #  original is two sen embeddings and their difference
+        self.para_classifier = nn.Linear(config.hidden_size * 3, 1)  #  original is two sen embeddings and their difference
 
 
     def forward(self, input_ids, attention_mask):
@@ -123,8 +123,8 @@ class MultitaskBERT(nn.Module):
         # logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
         # probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
         logits = self.para_classifier(embeddings)  # unnormalized
-        probs = F.softmax(logits, dim=-1)
-        return probs[torch.arange(probs.size(0)), 1].squeeze()
+        probs = F.sigmoid(logits)
+        return probs.squeeze()
 
 
     def predict_similarity(self,
