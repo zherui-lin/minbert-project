@@ -123,7 +123,7 @@ class MultitaskBERT(nn.Module):
         # logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
         # probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
         logits = self.para_classifier(embeddings)  # unnormalized
-        probs = F.sigmoid(logits)
+        probs = torch.sigmoid(logits)
         return probs.squeeze()
 
 
