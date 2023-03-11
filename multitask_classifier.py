@@ -68,6 +68,8 @@ class MultitaskBERT(nn.Module):
         self.para_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
         self.sts_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
 
+        self.para_classifier = nn.Linear(config.hidden_size * 3, 2)  #  original is two sen embeddings and their difference
+
 
     def forward(self, input_ids, attention_mask):
         'Takes a batch of sentences and produces embeddings for them.'
@@ -111,15 +113,18 @@ class MultitaskBERT(nn.Module):
 
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
-        embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
+        embeddings_diff = torch.abs(embeddings_1 - embeddings_2)
+        embeddings = torch.cat((embeddings_1, embeddings_2, embeddings_diff), dim=-1)  # simply concat two embeddings
         # embeddings = self.para_interm_linear(embeddings)
         embeddings = self.para_dropout(embeddings)
         # embeddings = F.relu(embeddings)  # activated layer
         # embeddings = self.para_out_linear(embeddings)
-        embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
-        logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
-        probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
-        return probs.squeeze()
+        # embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
+        # logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
+        # probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
+        logits = self.para_classifier(embeddings)  # unnormalized
+        probs = F.softmax(logits, dim=-1)
+        return probs[torch.arange(probs.size(0)), 1].squeeze()
 
 
     def predict_similarity(self,
