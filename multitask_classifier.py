@@ -139,12 +139,12 @@ class MultitaskBERT(nn.Module):
 
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
-        # embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
+        embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
         # embeddings = self.sts_interm_linear(embeddings)
-        # embeddings = self.sts_dropout(embeddings)
+        embeddings = self.sts_dropout(embeddings)
         # embeddings = F.relu(embeddings)  # add nonlinear layer
         # embeddings = self.sts_out_linear(embeddings)
-        # embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
+        embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
         # embeddings_1 = self.sts_dropout(embeddings_1)
         # embeddings_2 = self.sts_dropout(embeddings_2)
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
