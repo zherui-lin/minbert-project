@@ -145,8 +145,8 @@ class MultitaskBERT(nn.Module):
         # embeddings = F.relu(embeddings)  # add nonlinear layer
         # embeddings = self.sts_out_linear(embeddings)
         # embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
-        embeddings_1 = self.sts_dropout(embeddings_1)
-        embeddings_2 = self.sts_dropout(embeddings_2)
+        # embeddings_1 = self.sts_dropout(embeddings_1)
+        # embeddings_2 = self.sts_dropout(embeddings_2)
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
         scores =  logits * 2.5 + 2.5 # normalize to (1, 0) and scale to (0, 5)
         return scores.squeeze()
