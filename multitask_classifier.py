@@ -241,6 +241,9 @@ def train_multitask(args):
         # task run out of data will be cycled
         for sst_b, para_b, sts_b in tqdm(zip(cycled_sst_train_dataloader, cycled_para_train_dataloader, cycled_sts_train_dataloader), desc=f'epoch-{epoch}', disable=TQDM_DISABLE):
 
+            loss = torch.zeros([])
+            loss = loss.to(device)
+
             # sst task    
             if sst_b:  # skip none batches
                 sst_b_ids, sst_b_mask, sst_b_labels = (sst_b['token_ids'],
@@ -250,17 +253,14 @@ def train_multitask(args):
                 sst_b_mask = sst_b_mask.to(device)
                 sst_b_labels = sst_b_labels.to(device)
 
-                optimizer.zero_grad()
+                # optimizer.zero_grad()
                 sst_probs = model.predict_sentiment(sst_b_ids, sst_b_mask)
-                loss = F.cross_entropy(sst_probs, sst_b_labels.view(-1))  # cross entropy as loss funtion
+                loss += F.cross_entropy(sst_probs, sst_b_labels.view(-1))  # cross entropy as loss funtion
 
-                print("sst")
-                print(loss)
+                # loss.backward()
+                # optimizer.step()
 
-                loss.backward()
-                optimizer.step()
-
-                train_loss += loss.item()
+                # train_loss += loss.item()
                 num_batches += 1
 
 
@@ -276,17 +276,14 @@ def train_multitask(args):
                 para_b_mask_2 = para_b_mask_2.to(device)
                 para_b_labels = para_b_labels.to(device)
 
-                optimizer.zero_grad()
+                # optimizer.zero_grad()
                 para_probs = model.predict_paraphrase(para_b_ids_1, para_b_mask_1, para_b_ids_2, para_b_mask_2)
-                loss = F.binary_cross_entropy(para_probs, para_b_labels.view(-1).float())  # binary cross entropy as loss function
+                loss += F.binary_cross_entropy(para_probs, para_b_labels.view(-1).float())  # binary cross entropy as loss function
 
-                print("para")
-                print(loss)
+                # loss.backward()
+                # optimizer.step()
 
-                loss.backward()
-                optimizer.step()
-
-                train_loss += loss.item()
+                # train_loss += loss.item()
                 num_batches += 1
 
 
@@ -302,18 +299,20 @@ def train_multitask(args):
                 sts_b_mask_2 = sts_b_mask_2.to(device)
                 sts_b_scores = sts_b_scores.to(device)
 
-                optimizer.zero_grad()
+                # optimizer.zero_grad()
                 sts_scores = model.predict_similarity(sts_b_ids_1, sts_b_mask_1, sts_b_ids_2, sts_b_mask_2)
-                loss = F.mse_loss(sts_scores, sts_b_scores.view(-1))  # mean squared error as loss function
+                loss += F.mse_loss(sts_scores, sts_b_scores.view(-1))  # mean squared error as loss function
 
-                print("sts")
-                print(loss)
+                # loss.backward()
+                # optimizer.step()
 
-                loss.backward()
-                optimizer.step()
-
-                train_loss += loss.item()
+                # train_loss += loss.item()
                 num_batches += 1
+
+            optimizer.zero_grad()
+            loss.backward()
+            optimizer.step()
+            train_loss += loss.item()
 
         train_loss = train_loss / (num_batches)
 
