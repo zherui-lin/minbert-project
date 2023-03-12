@@ -10,6 +10,7 @@ from bert import BertModel
 from optimizer import AdamW
 from tqdm import tqdm
 from itertools import zip_longest, cycle
+from pcgrad import PCGrad
 
 from datasets import SentenceClassificationDataset, SentencePairDataset, \
     load_multitask_data, load_multitask_test_data
@@ -228,7 +229,7 @@ def train_multitask(args):
     model = model.to(device)
 
     lr = args.lr
-    optimizer = AdamW(model.parameters(), lr=lr)
+    optimizer = PCGrad(AdamW(model.parameters(), lr=lr))
     best_dev_metric = 0
 
     # Run for the specified number of epochs
@@ -241,8 +242,8 @@ def train_multitask(args):
         # task run out of data will be cycled
         for sst_b, para_b, sts_b in tqdm(zip(cycled_sst_train_dataloader, cycled_para_train_dataloader, cycled_sts_train_dataloader), desc=f'epoch-{epoch}', disable=TQDM_DISABLE):
 
-            loss = torch.zeros([])
-            loss = loss.to(device)
+            # loss = torch.zeros([])
+            # loss = loss.to(device)
 
             # sst task    
             if sst_b:  # skip none batches
@@ -313,10 +314,13 @@ def train_multitask(args):
                 num_batches += 1
 
             optimizer.zero_grad()
-            loss = (sst_loss * sst_loss.item() + para_loss * para_loss.item() + sts_loss * sts_loss.item()) / (sst_loss.item() + para_loss.item() + sts_loss.item())
-            loss.backward()
+            # loss = (sst_loss * sst_loss.item() + para_loss * para_loss.item() + sts_loss * sts_loss.item()) / (sst_loss.item() + para_loss.item() + sts_loss.item())
+            # loss.backward()
+            losses = [sst_loss, para_loss, sts_loss]
+            optimizer.pc_backward(losses)
             optimizer.step()
-            train_loss += loss.item()
+            # train_loss += loss.item()
+            train_loss += sum([loss.item() for loss in losses])
 
         train_loss = train_loss / (num_batches)
 
