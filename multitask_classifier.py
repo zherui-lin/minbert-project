@@ -256,7 +256,7 @@ def train_multitask(args):
                 # optimizer.zero_grad()
                 sst_probs = model.predict_sentiment(sst_b_ids, sst_b_mask)
                 sst_loss = F.cross_entropy(sst_probs, sst_b_labels.view(-1))  # cross entropy as loss funtion
-                loss += sst_loss / sst_loss.item()
+                # loss += sst_loss * sst_loss.item()
 
                 # loss.backward()
                 # optimizer.step()
@@ -280,7 +280,7 @@ def train_multitask(args):
                 # optimizer.zero_grad()
                 para_probs = model.predict_paraphrase(para_b_ids_1, para_b_mask_1, para_b_ids_2, para_b_mask_2)
                 para_loss = F.binary_cross_entropy(para_probs, para_b_labels.view(-1).float())  # binary cross entropy as loss function
-                loss += para_loss / para_loss.item()
+                # loss += para_loss * para_loss.item()
 
                 # loss.backward()
                 # optimizer.step()
@@ -304,7 +304,7 @@ def train_multitask(args):
                 # optimizer.zero_grad()
                 sts_scores = model.predict_similarity(sts_b_ids_1, sts_b_mask_1, sts_b_ids_2, sts_b_mask_2)
                 sts_loss = F.mse_loss(sts_scores, sts_b_scores.view(-1))  # mean squared error as loss function
-                loss += sts_loss / sts_loss.item()
+                # loss += sts_loss * sts_loss.item()
 
                 # loss.backward()
                 # optimizer.step()
@@ -313,6 +313,7 @@ def train_multitask(args):
                 num_batches += 1
 
             optimizer.zero_grad()
+            loss = (sst_loss * sst_loss.item() + para_loss * para_loss.item() + sts_loss * sts_loss.item()) / (sst_loss.item() + para_loss.item() + sts_loss.item())
             loss.backward()
             optimizer.step()
             train_loss += loss.item()
