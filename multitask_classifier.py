@@ -68,7 +68,7 @@ class MultitaskBERT(nn.Module):
         self.para_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
         self.sts_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
 
-        self.para_classifier = nn.Linear(config.hidden_size * 4, 1)  #  original is two sen embeddings and their difference
+        self.para_classifier = nn.Linear(config.hidden_size * 3, 1)  #  original is two sen embeddings and their difference
 
 
     def forward(self, input_ids, attention_mask):
@@ -114,8 +114,7 @@ class MultitaskBERT(nn.Module):
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
         embeddings_diff = torch.abs(embeddings_1 - embeddings_2)
-        embeddings_prod = embeddings_1 * embeddings_2
-        embeddings = torch.cat((embeddings_1, embeddings_2, embeddings_diff, embeddings_prod), dim=-1)  # simply concat two embeddings
+        embeddings = torch.cat((embeddings_1, embeddings_2, embeddings_diff), dim=-1)  # simply concat two embeddings
         # embeddings = self.para_interm_linear(embeddings)
         embeddings = self.para_dropout(embeddings)
         # embeddings = F.relu(embeddings)  # activated layer
