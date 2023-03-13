@@ -77,7 +77,7 @@ class PCGrad():
         for loss in losses:
             self._optim.zero_grad(set_to_none=True)
             loss.backward(retain_graph=True)
-            grad, shape, has_grad = self._retrieve_grad()
+            grad, shape = self._retrieve_grad()
             grads.append(self._flatten_grad(grad, shape))
             shapes.append(shape)
         return grads, shapes

@@ -60,16 +60,9 @@ class MultitaskBERT(nn.Module):
         self.para_dropout = nn.Dropout(config.hidden_dropout_prob)
         self.sts_dropout = nn.Dropout(config.hidden_dropout_prob)
 
-        # activated layer has the same dim with original
-        self.sst_interm_linear = nn.Linear(config.hidden_size, config.hidden_size)
-        self.para_interm_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
-        self.sts_interm_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
-
-        self.sst_out_linear = nn.Linear(config.hidden_size, len(config.num_labels))
-        self.para_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
-        self.sts_out_linear = nn.Linear(config.hidden_size * 2, config.hidden_size * 2)  # embeddings contain two sentence embeddings
-
-        self.para_classifier = nn.Linear(config.hidden_size * 3, 1)  #  original is two sen embeddings and their difference
+        self.sst_linear = nn.Linear(config.hidden_size, len(config.num_labels))
+        self.para_linear = nn.Linear(config.hidden_size * 3, 1)  #  original is two sen embeddings and their difference
+        self.sts_linear = nn.Linear(1, 1)  # map (-1, 1) to (0, 5)
 
 
     def forward(self, input_ids, attention_mask):
@@ -95,10 +88,8 @@ class MultitaskBERT(nn.Module):
         # raise NotImplementedError
 
         embeddings = self.forward(input_ids, attention_mask)
-        # embeddings = self.sst_interm_linear(embeddings)
         embeddings = self.sst_dropout(embeddings)
-        # embeddings = F.relu(embeddings) # activated layer
-        logits = self.sst_out_linear(embeddings) # unnormalized
+        logits = self.sst_linear(embeddings) # unnormalized
         probs = F.softmax(logits, dim=-1)  # normalized prob distribution
         return probs
 
@@ -116,14 +107,8 @@ class MultitaskBERT(nn.Module):
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
         embeddings_diff = torch.abs(embeddings_1 - embeddings_2)
         embeddings = torch.cat((embeddings_1, embeddings_2, embeddings_diff), dim=-1)  # simply concat two embeddings
-        # embeddings = self.para_interm_linear(embeddings)
         embeddings = self.para_dropout(embeddings)
-        # embeddings = F.relu(embeddings)  # activated layer
-        # embeddings = self.para_out_linear(embeddings)
-        # embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
-        # logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
-        # probs = logits * 0.5 + 0.5  # rescale (-1, 1) to (0, 1)
-        logits = self.para_classifier(embeddings)  # unnormalized
+        logits = self.para_linear(embeddings)  # unnormalized
         probs = torch.sigmoid(logits)
         return probs.squeeze()
 
@@ -140,15 +125,10 @@ class MultitaskBERT(nn.Module):
         embeddings_1 = self.forward(input_ids_1, attention_mask_1)
         embeddings_2 = self.forward(input_ids_2, attention_mask_2)
         embeddings = torch.cat((embeddings_1, embeddings_2), dim=-1)  # simply concat two embeddings
-        # embeddings = self.sts_interm_linear(embeddings)
         embeddings = self.sts_dropout(embeddings)
-        # embeddings = F.relu(embeddings)  # add nonlinear layer
-        # embeddings = self.sts_out_linear(embeddings)
         embeddings_1, embeddings_2 = torch.split(embeddings, embeddings_1.size()[1], dim=1)  # split back to two sentence embeddings
-        # embeddings_1 = self.sts_dropout(embeddings_1)
-        # embeddings_2 = self.sts_dropout(embeddings_2)
         logits = torch.cosine_similarity(embeddings_1, embeddings_2)  # unnormalized range of (-1, 1)
-        scores =  logits * 2.5 + 2.5 # normalize to (1, 0) and scale to (0, 5)
+        scores =  F.relu(self.sts_linear(logits))
         return scores.squeeze()
 
 
@@ -314,7 +294,6 @@ def train_multitask(args):
                 num_batches += 1
 
             optimizer.zero_grad()
-            # loss = (sst_loss * sst_loss.item() + para_loss * para_loss.item() + sts_loss * sts_loss.item()) / (sst_loss.item() + para_loss.item() + sts_loss.item())
             # loss.backward()
             losses = [sst_loss, para_loss, sts_loss]
             optimizer.pc_backward(losses)
