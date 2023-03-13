@@ -334,7 +334,7 @@ def train_multitask(args):
         # use average_train_metric as update threshold
         if average_dev_metric > best_dev_metric:
             best_dev_metric = average_dev_metric
-            save_model(model, optimizer, args, config, args.filepath)
+            save_model(model, optimizer.optimizer, args, config, args.filepath)
 
         print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, avg train metric :: {average_train_metric :.3f}, avg dev metric :: {average_dev_metric :.3f}") 
         # print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, avg dev metric :: {average_dev_metric :.3f}")
