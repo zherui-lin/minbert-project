@@ -56,7 +56,7 @@ class MultitaskBERT(nn.Module):
                 param.requires_grad = True
         ### TODO
         # raise NotImplementedError
-
+        self.general_dropout = nn.Dropout(0.5)
         self.sst_dropout = nn.Dropout(0.5)
         self.para_dropout = nn.Dropout(config.hidden_dropout_prob)
         self.sts_dropout = nn.Dropout(0.5)
@@ -76,6 +76,7 @@ class MultitaskBERT(nn.Module):
         # raise NotImplementedError
 
         embeddings = self.bert(input_ids, attention_mask)['pooler_output']
+        embeddings = self.general_dropout(embeddings)
         return embeddings
 
 
