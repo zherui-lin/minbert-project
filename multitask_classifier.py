@@ -56,7 +56,6 @@ class MultitaskBERT(nn.Module):
                 param.requires_grad = True
         ### TODO
         # raise NotImplementedError
-        self.general_dropout = nn.Dropout(0.5)
         self.sst_dropout = nn.Dropout(0.5)
         self.para_dropout = nn.Dropout(config.hidden_dropout_prob)
         self.sts_dropout = nn.Dropout(0.5)
@@ -76,7 +75,6 @@ class MultitaskBERT(nn.Module):
         # raise NotImplementedError
 
         embeddings = self.bert(input_ids, attention_mask)['pooler_output']
-        embeddings = self.general_dropout(embeddings)
         return embeddings
 
 
@@ -215,7 +213,7 @@ def train_multitask(args):
     lr = args.lr
     # optimizer = PCGrad(AdamW(model.parameters(), lr=lr))
     optimizer = PCGrad(AdamaxW(model.parameters(), lr=lr))  # switch to AdamaxW algo
-    scheduler = ExponentialLR(optimizer.optimizer, gamma=0.9)  # parameterize later to provide options via CLI
+    scheduler = ExponentialLR(optimizer.optimizer, gamma=0.8)  # parameterize later to provide options via CLI
     best_dev_metric = 0
 
     # Run for the specified number of epochs
