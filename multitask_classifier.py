@@ -5,9 +5,10 @@ import torch
 from torch import nn
 import torch.nn.functional as F
 from torch.utils.data import DataLoader
+from torch.optim.lr_scheduler import *
 
 from bert import BertModel
-from optimizer import AdamW
+from optimizer import AdamW, AdamaxW
 from tqdm import tqdm
 from itertools import zip_longest, cycle
 from pcgrad import PCGrad
@@ -211,7 +212,9 @@ def train_multitask(args):
     model = model.to(device)
 
     lr = args.lr
-    optimizer = PCGrad(AdamW(model.parameters(), lr=lr))
+    # optimizer = PCGrad(AdamW(model.parameters(), lr=lr))
+    optimizer = PCGrad(AdamaxW(model.parameters(), lr=lr))  # switch to AdamaxW algo
+    scheduler = ExponentialLR(optimizer.optimizer, gamma=0.9)  # parameterize later to provide options via CLI
     best_dev_metric = 0
 
     # Run for the specified number of epochs
@@ -316,6 +319,8 @@ def train_multitask(args):
         if average_dev_metric > best_dev_metric:
             best_dev_metric = average_dev_metric
             save_model(model, optimizer.optimizer, args, config, args.filepath)
+
+        scheduler.step()
 
         print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, avg train metric :: {average_train_metric :.3f}, avg dev metric :: {average_dev_metric :.3f}") 
         # print(f"Epoch {epoch}: train loss :: {train_loss :.3f}, avg dev metric :: {average_dev_metric :.3f}")
