@@ -56,9 +56,9 @@ class MultitaskBERT(nn.Module):
         ### TODO
         # raise NotImplementedError
 
-        self.sst_dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.sst_dropout = nn.Dropout(0.5)
         self.para_dropout = nn.Dropout(config.hidden_dropout_prob)
-        self.sts_dropout = nn.Dropout(config.hidden_dropout_prob)
+        self.sts_dropout = nn.Dropout(0.5)
 
         self.sst_linear = nn.Linear(config.hidden_size, len(config.num_labels))
         self.para_linear = nn.Linear(config.hidden_size * 3, 1)  #  original is two sen embeddings and their difference
