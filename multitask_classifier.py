@@ -375,12 +375,12 @@ def get_args():
     # ideal batch sizes to make similar batch nums for 3 tasks should be 4 : 64 : 3
     # larger batch sizes are better but limited by GPU memory capability
     # current default sizes can fit in 24G GPU
-    parser.add_argument("--sst_batch_size", help='fit with para batch size', type=int, default=3)  # Jerry edited
-    parser.add_argument("--para_batch_size", help='48 can fit in 24G GPU', type=int, default=48)  # Jerry edited
+    parser.add_argument("--sst_batch_size", help='fit with para batch size', type=int, default=2)  # Jerry edited
+    parser.add_argument("--para_batch_size", help='48 can fit in 24G GPU', type=int, default=36)  # Jerry edited
     parser.add_argument("--sts_batch_size", help='fit with para batch size', type=int, default=2)  # Jerry edited
     parser.add_argument("--hidden_dropout_prob", type=float, default=0.3)
     parser.add_argument("--lr", type=float, help="learning rate, default lr for 'pretrain': 1e-3, 'finetune': 1e-5",
-                        default=1e-5)
+                        default=1e-4)
 
     args = parser.parse_args()
     return args
